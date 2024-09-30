@@ -81,6 +81,16 @@ impl DynamoEventRepository {
         Self::use_table_names(self.client, event_table, snapshot_table)
     }
 
+    /// Streams all events from the given events table regardless of aggregate type.
+    pub async fn stream_all_serialized(&self) -> Result<ReplayStream, PersistenceError> {
+        let scan = self
+            .client
+            .scan()
+            .table_name(&self.event_table)
+            .limit(self.stream_channel_size as i32);
+        Ok(stream_all_events(scan, self.stream_channel_size))
+    }
+
     fn use_table_names(client: Client, event_table: &str, snapshot_table: &str) -> Self {
         Self {
             client,
